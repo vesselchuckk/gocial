@@ -11,11 +11,6 @@ type JWTAuth struct {
 	iss    string
 }
 
-type JWTAuthInterface interface {
-	GenerateToken(claims jwt.Claims) (string, error)
-	ValidateToken(token string) (*jwt.Token, error)
-}
-
 func NewJWTAuth(secret, aud, iss string) *JWTAuth {
 	return &JWTAuth{
 		secret: secret,

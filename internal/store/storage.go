@@ -10,6 +10,7 @@ import (
 type Store struct {
 	Users     *UsersStore
 	Posts     *PostsStore
+	Users     *UsersStore
 	Comments  *CommentsStore
 	Followers *FollowerStore
 	Roles     *RolesStore
