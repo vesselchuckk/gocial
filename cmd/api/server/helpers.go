@@ -93,6 +93,14 @@ func (s *Server) unauthorizedError(w http.ResponseWriter, r *http.Request, err e
 	WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 }
 
+func (s *Server) rateLimiterExceeded(w http.ResponseWriter, r *http.Request, retryAfter string) {
+	s.Logger.Warnw("rate limiter exceeded", "method", r.Method, "path", r.URL)
+	
+	w.Header().Set("Retry-After", retryAfter)
+
+	WriteJSONError(w, http.StatusTooManyRequests, "rate limiter exceeded, retry after: "+retryAfter)
+}
+
 func (s *Server) postContextFetch(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		idParam := chi.URLParam(r, "postID")

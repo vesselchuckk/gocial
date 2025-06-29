@@ -41,6 +41,10 @@ type Config struct {
 	RedisPW      string `env:"REDIS_PASSWORD"`
 	RedisDB      int    `env:"REDIS_DB"`
 	RedisEnabled bool   `env:"REDIS_ENABLED"`
+
+	ReqPerTime int `env:"RL_RPT" envDefault:"20"`
+	TimeFrame  time.Duration
+	Enabled    bool `env:"RL_ENABLED" envDefault:"true"`
 }
 
 func New() (*Config, error) {

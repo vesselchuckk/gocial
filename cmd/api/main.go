@@ -1,16 +1,20 @@
 package main
 
 import (
+	"expvar"
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/vesselchuckk/go-social/cmd/api/config"
 	"github.com/vesselchuckk/go-social/cmd/api/server"
 	"github.com/vesselchuckk/go-social/internal/auth"
 	"github.com/vesselchuckk/go-social/internal/mails"
+	"github.com/vesselchuckk/go-social/internal/ratelimiter"
 	"github.com/vesselchuckk/go-social/internal/store"
 	"github.com/vesselchuckk/go-social/internal/store/cache"
 	"go.uber.org/zap"
 	"log"
+	"runtime"
+	"time"
 )
 
 func main() {
@@ -50,8 +54,21 @@ func main() {
 
 	JWTauth := auth.NewJWTAuth(cfg.JWTSecret, cfg.JWTiss, cfg.JWTiss)
 
-	srv := server.NewServer(cfg, dataStorage, logger, mailer, JWTauth, redisDB)
-	if err := srv.Run(); err != nil {
+	rl := ratelimiter.NewFWRateLimiter(cfg.ReqPerTime, time.Second*5)
+
+	srv := server.NewServer(cfg, dataStorage, logger, mailer, JWTauth, redisDB, rl)
+
+	expvar.NewString("version").Set(version)
+	expvar.Publish("database", expvar.Func(func() any {
+		return db.Stats()
+	}))
+	expvar.Publish("goroutines", expvar.Func(func() any {
+		return runtime.NumGoroutine()
+	}))
+
+	mux := srv.Make()
+
+	if err := srv.Run(mux); err != nil {
 		logger.Fatal(err)
 	}
 }

@@ -24,3 +24,17 @@ services:
       - REDIS_PORT=6379
       - REDIS_DATABASES=16
     command: redis-server --save 60 1 --loglevel warning
+
+  web:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'localhost'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost'
+    ports:
+      - '80:80'
+    volumes:
+      - '~/.gitlab/config:/etc/gitlab'
+      - '~/.gitlab/logs:/var/log/gitlab'
+      - '~/.gitlab/data:/var/opt/gitlab'

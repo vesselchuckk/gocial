@@ -153,3 +153,16 @@ func (s *Server) getUser(ctx context.Context, userID uuid.UUID) (*store.User, er
 
 	return user, nil
 }
+
+func (s *Server) RateLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.RateLimiter.Enabled {
+			if allow, retryAfter := s.RateLimiter.Allow(r.RemoteAddr); !allow {
+				s.rateLimiterExceeded(w, r, retryAfter.String())
+				return
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
