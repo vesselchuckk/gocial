@@ -43,7 +43,7 @@ func (s *UserStore) Set(ctx context.Context, user *store.User) error {
 		return fmt.Errorf("user ID can't be empty")
 	}
 
-	cacheKey := fmt.Sprintf("user-%v")
+	cacheKey := fmt.Sprintf("user-%v", user.ID)
 
 	data, err := json.Marshal(user)
 	if err != nil {

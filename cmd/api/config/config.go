@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-type mailConfig struct {
-	exp time.Duration `env:"TOKEN_EXP"`
-}
-
 type Config struct {
 	ServerHost       string `env:"SERVER_HOST"`
 	ServerPort       string `env:"SERVER_PORT"`
@@ -46,7 +42,7 @@ type Config struct {
 func New() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env: %w", err)
+		log.Fatalf("Error loading .env: %v", err)
 	}
 
 	var cfg Config
