@@ -42,12 +42,12 @@ type Config struct {
 func New() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatalf("Error loading .env: %v", err)
+		log.Fatalf("error loading .env: %v", err)
 	}
 
 	var cfg Config
 	if err = env.Parse(&cfg); err != nil {
-		return nil, fmt.Errorf("Error getting config: %w", err)
+		return nil, fmt.Errorf("error getting config: %w", err)
 	}
 
 	return &cfg, nil

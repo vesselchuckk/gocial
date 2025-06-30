@@ -15,7 +15,6 @@ import (
 )
 
 var (
-	exp                  = time.Hour * 24 * 3
 	ErrDuplicateEmail    = errors.New("a user with this email already exists")
 	ErrDuplicateUsername = errors.New("a user with this username already exists")
 )
@@ -34,23 +33,6 @@ type User struct {
 
 type UsersStore struct {
 	db *sqlx.DB
-}
-
-type password struct {
-	text *string
-	hash []byte
-}
-
-func (p *password) Set(text string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(text), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-
-	p.text = &text
-	p.hash = hash
-
-	return nil
 }
 
 func NewUsersStore(db *sql.DB) *UsersStore {
