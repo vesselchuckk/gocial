@@ -5,7 +5,6 @@ import (
 	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 	"log"
-	"time"
 )
 
 type Config struct {
@@ -20,7 +19,6 @@ type Config struct {
 
 	ENV     string
 	Version string
-	exp     time.Duration `env:"TOKEN_EXP"`
 
 	MailAPI   string `env:"MAIL_API_KEY"`
 	FromEmail string `env:"SENDER_EMAIL"`
