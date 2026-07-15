@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/go-redis/redis/v8"
-	"github.com/joho/godotenv"
 	"github.com/vesselchuckk/go-social/cmd/api/config"
 	"github.com/vesselchuckk/go-social/cmd/api/server"
 	"github.com/vesselchuckk/go-social/internal/auth"
@@ -14,9 +13,6 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		log.Panicf("warning: error occured when loading config: %s", err)
-	}
 
 	cfg, err := config.New()
 	if err != nil {

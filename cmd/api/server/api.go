@@ -51,7 +51,7 @@ func (s *Server) Run() error {
 	router.Use(middleware.Recoverer)
 
 	router.Route("/v1", func(router chi.Router) {
-		router.With(s.BasicAuth()).Get("/health", s.healthHandler)
+		router.Get("/health", s.healthHandler)
 
 		router.Route("/posts", func(router chi.Router) {
 			router.Use(s.AuthMiddleware)
