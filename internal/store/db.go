@@ -4,16 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"os"
 	"time"
 )
 
 func NewPostgresDB() (*sql.DB, error) {
-	if err := godotenv.Load(); err != nil {
-		return nil, fmt.Errorf("failed to load .env: %w", err)
-	}
 	dsn := os.Getenv("DB_URL")
 
 	db, err := sql.Open("postgres", dsn)
