@@ -81,7 +81,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: nginx:1-28:alpine
+    image: nginx:1.28-alpine
     container_name: go-social-nginx
     restart: unless-stopped
     ports:
