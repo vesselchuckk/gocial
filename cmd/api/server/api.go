@@ -51,7 +51,7 @@ func (s *Server) Run() error {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 
-	router.Handle*("/metrics", promhttp.Handler())
+	router.Handle("/metrics", promhttp.Handler())
 
 	router.Route("/v1", func(router chi.Router) {
 		router.Get("/health", s.healthHandler)
