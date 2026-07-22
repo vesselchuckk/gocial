@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/vesselchuckk/go-social/internal/store"
+	metrics "github.com/vesselchuckk/go-social/cmd/api/server/metrics"
 	"net/http"
 	"strings"
 )
@@ -63,6 +64,7 @@ func (s *Server) AuthMiddleware(next http.Handler) http.Handler {
 		token := parts[1]
 		jwtToken, err := s.JWTAuth.ValidateToken(token)
 		if err != nil {
+			metrics.IncJWTValidationError()
 			s.unauthorizedError(w, r, err)
 			return
 		}

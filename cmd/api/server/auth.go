@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/vesselchuckk/go-social/internal/mails"
 	"github.com/vesselchuckk/go-social/internal/store"
+	metrics "github.com/vesselchuckk/go-social/cmd/api/server/metrics"
 	"net/http"
 	"time"
 )
@@ -103,6 +104,9 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.Logger.Infow("Email sent with status code: %v", status)
+
+	// record successful user registration
+	metrics.IncUserRegistered()
 
 	if err := s.jsonResponse(w, http.StatusCreated, userWithToken); err != nil {
 		s.internalServerError(w, r, err)

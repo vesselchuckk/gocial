@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/vesselchuckk/go-social/internal/store"
+	metrics "github.com/vesselchuckk/go-social/cmd/api/server/metrics"
 	"log"
 	"net/http"
 	"strconv"
@@ -73,6 +74,9 @@ func (s *Server) createPostHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("error creating post: %v", err)
 		return
 	}
+
+	// record metric for posts created
+	metrics.IncPostCreated()
 
 	if err := s.jsonResponse(w, http.StatusCreated, post); err != nil {
 		s.badRequest(w, r, err)
