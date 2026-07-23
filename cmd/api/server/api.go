@@ -3,7 +3,6 @@ package server
 import (
 	"net"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -56,15 +55,7 @@ func (s *Server) Run() error {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 
-	router.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.HasPrefix(r.URL.Path, "/metrics") {
-				next.ServeHTTP(w, r)
-				return
-			}
-			metrics.UseMetrics(next).ServeHTTP(w, r)
-		})
-	})
+	router.Use(metrics.MetricsMiddleware)
 
 	router.Handle("/metrics", promhttp.Handler())
 

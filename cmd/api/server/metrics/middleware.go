@@ -1,9 +1,11 @@
 package metrics
 
 import (
-    "fmt"
-    "net/http"
-    "time"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type metricsResponseWriter struct {
@@ -28,7 +30,7 @@ func (rw *metricsResponseWriter) Write(b []byte) (int, error) {
 	return rw.ResponseWriter.Write(b)
 }
 
-func UseMetrics(next http.Handler) http.Handler {
+func MetricsMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         start := time.Now()
         mrw := &metricsResponseWriter{
@@ -43,15 +45,23 @@ func UseMetrics(next http.Handler) http.Handler {
             status = http.StatusOK
         }
 
-        method := r.Method
-        path := r.URL.Path
+        route := chi.RouteContext(r.Context()).RoutePattern()
+        if route == "" {
+            route = "unmatched"
+        }
+        if route == "/metrics" {
+            return
+        }
 
         HttpRequestsTotal.WithLabelValues(
             r.Method,
-            r.URL.Path,
-            fmt.Sprintf("%d", status),
+            route,
+            strconv.Itoa(status),
         ).Inc()
-        HttpRequestDuration.WithLabelValues(method, path).Observe(time.Since(start).Seconds())
+        HttpRequestDuration.WithLabelValues(
+            r.Method, 
+            route,
+        ).Observe(time.Since(start).Seconds())
 
         if status >= 500 && status < 600 {
             HTTP5xxTotal.Inc()

@@ -46,18 +46,12 @@ func init() {
         Help: "Total number of JWT validation errors",
     })
 
-    HTTP5xxTotal = prometheus.NewCounter(prometheus.CounterOpts{
-        Name: "http_5xx_total",
-        Help: "Total number of HTTP 5xx responses",
-    })
-
     prometheus.MustRegister(HttpRequestsTotal)
     prometheus.MustRegister(HttpRequestDuration)
     prometheus.MustRegister(DBQueriesTotal)
     prometheus.MustRegister(PostsCreatedTotal)
     prometheus.MustRegister(UsersRegisteredTotal)
     prometheus.MustRegister(JWTValidationErrorsTotal)
-    prometheus.MustRegister(HTTP5xxTotal)
 }
 
 func IncDBQuery() {
