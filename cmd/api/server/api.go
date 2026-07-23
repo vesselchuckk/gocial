@@ -1,19 +1,23 @@
 package server
 
 import (
+	"net"
+	"net/http"
+	"strings"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-redis/redis/v8"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/vesselchuckk/go-social/cmd/api/config"
+	"github.com/vesselchuckk/go-social/cmd/api/server/metrics"
 	"github.com/vesselchuckk/go-social/internal/auth"
 	"github.com/vesselchuckk/go-social/internal/mails"
 	"github.com/vesselchuckk/go-social/internal/store"
 	"github.com/vesselchuckk/go-social/internal/store/cache"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
-	"net"
-	"net/http"
 )
 
 type Server struct {
@@ -26,7 +30,7 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config, db *store.Store, logger *zap.SugaredLogger, mailer *mails.SendGridMailer, auth *auth.JWTAuth, rdb *redis.Client) *Server {
-	return &Server{
+	s := &Server{
 		Config:  cfg,
 		Store:   db,
 		Logger:  logger,
@@ -34,6 +38,7 @@ func NewServer(cfg *config.Config, db *store.Store, logger *zap.SugaredLogger, m
 		JWTAuth: auth,
 		Redis:   cache.NewCacheStore(rdb),
 	}
+	return s
 }
 
 func (s *Server) Run() error {
@@ -50,6 +55,16 @@ func (s *Server) Run() error {
 
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
+
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if strings.HasPrefix(r.URL.Path, "/metrics") {
+				next.ServeHTTP(w, r)
+				return
+			}
+			metrics.UseMetrics(next).ServeHTTP(w, r)
+		})
+	})
 
 	router.Handle("/metrics", promhttp.Handler())
 
