@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -53,18 +52,12 @@ func MetricsMiddleware(next http.Handler) http.Handler {
             return
         }
 
-        HttpRequestsTotal.WithLabelValues(
+        ObserveHTTPRequest(
             r.Method,
             route,
-            strconv.Itoa(status),
-        ).Inc()
-        HttpRequestDuration.WithLabelValues(
-            r.Method, 
-            route,
-        ).Observe(time.Since(start).Seconds())
+            status,
+            time.Since(start),
+        )
 
-        if status >= 500 && status < 600 {
-            HTTP5xxTotal.Inc()
-        }
     })
 }
