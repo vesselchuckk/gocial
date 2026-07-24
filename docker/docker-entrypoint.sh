@@ -2,13 +2,31 @@
 
 set -eu
 
-DB_HOST="${DB_HOST}"
-DB_PORT="${DB_PORT}"
-DB_USER="${DB_USER}"
-DB_PASSWORD="${DB_PASSWORD}"
-DB_NAME="${DB_NAME}"
+: "${DB_HOST:?DB_HOST is required}"
+: "${DB_PORT:?DB_PORT is required}"
+: "${DB_USER:?DB_USER is required}"
+: "${DB_PASSWORD:?DB_PASSWORD is required}"
+: "${DB_NAME:?DB_NAME is required}"
 
 DB_URL="${DB_URL:-postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable}"
+
+WAIT_TIMEOUT="${WAIT_TIMEOUT:-60}"
+
+wait_for() {
+    local name="$1"
+    shift
+    elapsed=0
+
+    until "$@" >/dev/null 2>&1; do
+        elapsed=$((elapsed + 1))
+        if [ $elapsed -ge $WAIT_TIMEOUT ]; then
+            echo "Timeout after ${WAIT_TIMEOUT} seconds waiting for ${name}"
+            exit 1
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+}
 
 #
 # Wait for Redis
@@ -20,14 +38,11 @@ if [ "${REDIS_ENABLED:-false}" = "true" ] || [ -n "${REDIS_ADDR:-}" ]; then
 
     echo "Waiting for Redis at ${REDIS_HOST}:${REDIS_PORT}..."
 
-    until redis-cli \
-        -h "${REDIS_HOST}" \
-        -p "${REDIS_PORT}" \
-        ${REDIS_PASSWORD:+-a "$REDIS_PASSWORD"} \
-        ping >/dev/null 2>&1
-    do
-        sleep 1
-    done
+    export REDISCLI_AUTH="${REDIS_PASSWORD:-}"
+
+    wait_for "Redis" redis-cli -h "${REDIS_HOST}" -p "${REDIS_PORT}" ping
+
+    unset REDISCLI_AUTH
 
     echo "Redis is ready."
 fi
@@ -37,13 +52,7 @@ fi
 #
 echo "Waiting for PostgreSQL at ${DB_HOST}:${DB_PORT}..."
 
-until pg_isready \
-    -h "${DB_HOST}" \
-    -p "${DB_PORT}" \
-    -U "${DB_USER}" >/dev/null 2>&1
-do
-    sleep 1
-done
+wait_for "PostgreSQL" pg_isready -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}"
 
 echo "PostgreSQL is ready."
 
