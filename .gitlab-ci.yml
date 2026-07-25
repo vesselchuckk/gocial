@@ -81,6 +81,8 @@ build-image:
   stage: build
   image: docker:24.0
   variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
     IMAGE_TAG: "go-social:${CI_COMMIT_SHORT_SHA}"
   script:
     - docker version
