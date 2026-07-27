@@ -3,6 +3,11 @@ package server
 import (
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	"context"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -106,7 +111,34 @@ func (s *Server) Run() error {
 		Addr:    net.JoinHostPort(s.Config.ServerHost, s.Config.ServerPort),
 		Handler: middleware.Logger(router),
 	}
-	s.Logger.Infow("sever has started", "addr", s.Config.ServerHost, "env", s.Config.ENV)
 
-	return srv.ListenAndServe()
+	serverErrors := make(chan error, 1)
+	go func() {
+		s.Logger.Infow("sever has started", "addr", s.Config.ServerHost, "env", s.Config.ENV)
+
+		serverErrors <- srv.ListenAndServe()
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+
+	select {
+	case err := <-serverErrors:
+		return err
+	
+	case sig := <-quit:
+		s.Logger.Infow("shutting down server", "signal", sig)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		defer cancel()
+		
+		if err := srv.Shutdown(ctx); err != nil {
+			s.Logger.Errorw("failed to shutdown server", "error", err)
+			return err
+		}
+
+		s.Logger.Infow("server gracefully stopped")
+		return nil
+	}
+
 }

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: backend
 spec:
-  replicas: 5
+  replicas: 1
   selector:
     matchLabels:
       app: backend
@@ -12,6 +12,25 @@ spec:
       labels:
         app: backend
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:16-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres -p 5432; do
+                echo "waiting for postgres..."; sleep 2;
+              done
+        - name: wait-for-redis
+          image: redis:6.2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until redis-cli -h redis -p 6379 ping; do
+                echo "waiting for redis..."; sleep 2;
+              done
       containers:
         - name: backend
           image: gosocial:latest
@@ -21,3 +40,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: backend-config
+            - secretRef:
+                name: backend-secrets
+          readinessProbe:
+            httpGet:
+              path: /v1/health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
