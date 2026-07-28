@@ -102,6 +102,7 @@ push-image:
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
@@ -114,7 +115,9 @@ push-image:
 deploy-to-minikube:
   stage: deploy
   tags:
-    - minikube-runner   # тег self-hosted раннера, зарегистрированного на твоей машине
+    - minikube-runner
+  variables:
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      # тег self-hosted раннера, зарегистрированного на твоей машине
   script:
     # трогаем ТОЛЬКО backend Deployment — postgres/redis/nginx этой командой не задеваются
     - kubectl set image deployment/backend backend="$IMAGE_TAG"
