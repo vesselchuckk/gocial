@@ -93,4 +93,31 @@ build-image:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
+# PUSH (только master — публикуем реальный артефакт только после merge)
+ 
+push-image:
+  stage: push
+  image: docker:24.0
+  services:
+    - docker:24.0-dind
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
+    - docker push "$IMAGE_TAG"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+ 
+# DEPLOY (только master, только на раннере с доступом к твоему minikube)
+ 
+deploy-to-minikube:
+  stage: deploy
+  tags:
+    - minikube-runner   # тег self-hosted раннера, зарегистрированного на твоей машине
+  script:
+    # трогаем ТОЛЬКО backend Deployment — postgres/redis/nginx этой командой не задеваются
+    - kubectl set image deployment/backend backend="$IMAGE_TAG"
+    - kubectl rollout status deployment/backend --timeout=120s
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
 
