@@ -2,7 +2,8 @@ stages:
   - lint
   - test
   - build
-
+  - push
+  - deploy
 
 variables:
   # go
