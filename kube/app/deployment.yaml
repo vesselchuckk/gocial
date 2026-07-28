@@ -12,6 +12,8 @@ spec:
       labels:
         app: backend
     spec:
+      imagePullSecrets:
+        - name: gitlab-registry
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
@@ -33,7 +35,9 @@ spec:
               done
       containers:
         - name: backend
-          image: gosocial:latest
+          # placeholder-тег на первый ручной деплой,
+          # дальше CI подставляет реальный через `kubectl set image`
+          image: registry.gitlab.com/vesselchuckk/go-social:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -48,3 +52,10 @@ spec:
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+      terminationGracePeriodSeconds: 30
+ 
+
