@@ -99,8 +99,6 @@ build-image:
 push-image:
   stage: push
   image: docker:24.0
-  services:
-    - docker:24.0-dind
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
