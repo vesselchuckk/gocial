@@ -121,7 +121,7 @@ deploy-to-minikube:
     IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      # тег self-hosted раннера, зарегистрированного на твоей машине
   script:
     # трогаем ТОЛЬКО backend Deployment — postgres/redis/nginx этой командой не задеваются
-    - kubectl set image deployment/app backend="$IMAGE_TAG"
+    - kubectl set image deployment/backend backend="$IMAGE_TAG"
     - kubectl rollout status deployment/backend --timeout=120s
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
