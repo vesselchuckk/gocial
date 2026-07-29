@@ -117,6 +117,7 @@ deploy-to-minikube:
   tags:
     - minikube-runner
   variables:
+    CI_DEBUG_TRACE: "true"
     IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      # тег self-hosted раннера, зарегистрированного на твоей машине
   script:
     # трогаем ТОЛЬКО backend Deployment — postgres/redis/nginx этой командой не задеваются
