@@ -2,7 +2,8 @@ stages:
   - lint
   - test
   - build
-
+  - push
+  - deploy
 
 variables:
   # go
@@ -93,4 +94,34 @@ build-image:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-
+# PUSH 
+ 
+push-image:
+  stage: push
+  image: docker:24.0
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
+    - docker push "$IMAGE_TAG"
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+ 
+# DEPLOY 
+ 
+deploy-to-minikube:
+  stage: deploy
+  tags:
+    - minikube-runner
+  variables:
+    CI_DEBUG_TRACE: "true"
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"     
+  script:
+    - sops -d kube/base/secret.yaml | kubectl apply -f
+    - kubectl set image deployment/backend backend="$IMAGE_TAG"
+    - kubectl rollout status deployment/backend --timeout=120s
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
