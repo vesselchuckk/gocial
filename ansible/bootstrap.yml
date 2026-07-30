@@ -1,0 +1,7 @@
+- hosts: local
+  gather_facts: false
+
+  tasks:
+    - name: decrypt and apply secrets
+      shell: |
+        sops -d {{ playbook_dir }}/../kube/base/secret.yaml | kubectl apply -f -

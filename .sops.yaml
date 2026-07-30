@@ -1,0 +1,4 @@
+creation_rules:
+  - path_regex: kube/base/secret\.yaml$
+    encrypted_regex: '^(stringData)$'
+    age: age150uksj4hjew5ld0rx7u8huclpexecg7hrtf7h8xd8xh4qp58ccns73a0wu
