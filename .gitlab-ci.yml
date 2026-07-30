@@ -1,6 +1,7 @@
 stages:
   - lint
   - test
+  - security
   - build
   - push
   - deploy
@@ -75,7 +76,19 @@ test:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
+      
+govulncheck:
+  stage: security
+  image: golang:${GO_VERSION}-alpine
+  before_script:
+    - apk add --no-cache git
+    - go install golang.org/x/vuln/cmd/govulncheck@latest
+  script:
+    - $(go env GOPATH)/bin/govulncheck ./...
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      
 # BUILD
 
 build-image:
@@ -94,7 +107,29 @@ build-image:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-# PUSH (только master — публикуем реальный артефакт только после merge)
+trivy:
+  stage: security
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+    DOCKER_TLS_CERTDIR: ""
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
+  before_script:
+    - trivy --version
+  script:
+    - |
+      trivy image \
+        --severity HIGH,CRITICAL \
+        --exit-code 1 \
+        --no-progress \
+        gosocial:${CI_COMMIT_SHORT_SHA}
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      
+# PUSH
  
 push-image:
   stage: push
@@ -105,12 +140,11 @@ push-image:
     IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
     - docker push "$IMAGE_TAG"
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
  
-# DEPLOY (только master, только на раннере с доступом к твоему minikube)
+# DEPLOY
  
 deploy-to-minikube:
   stage: deploy
@@ -118,9 +152,8 @@ deploy-to-minikube:
     - minikube-runner
   variables:
     CI_DEBUG_TRACE: "true"
-    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      # тег self-hosted раннера, зарегистрированного на твоей машине
+    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      
   script:
-    # трогаем ТОЛЬКО backend Deployment — postgres/redis/nginx этой командой не задеваются
     - kubectl set image deployment/backend backend="$IMAGE_TAG"
     - kubectl rollout status deployment/backend --timeout=120s
   rules:
