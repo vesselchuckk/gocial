@@ -105,6 +105,11 @@ build-image:
     - docker info
     - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
     - docker images | grep gosocial
+    - docker save "$IMAGE_TAG" -o image.tar
+  artifacts:
+    paths: 
+      - image.tar
+    expire_in: 1 hour
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -116,6 +121,8 @@ trivy:
   image:
     name: aquasec/trivy:latest
     entrypoint: [""]
+  needs:
+    - build-image
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
@@ -123,12 +130,7 @@ trivy:
   before_script:
     - trivy --version
   script:
-    - |
-      trivy image \
-        --severity HIGH,CRITICAL \
-        --exit-code 1 \
-        --no-progress \
-        "$IMAGE_TAG"
+    - trivy image --input image.tar --severity CRITICAL --exit-code 1 --no-progress 
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -140,11 +142,15 @@ push-image:
   tags:
     - docker-runner
   image: docker:24.0
+  needs:
+    - build-image
+    - trivy
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
     IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"
   script:
+    - docker load -i image.tar
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker push "$IMAGE_TAG"
   rules:
