@@ -93,15 +93,17 @@ govulncheck:
 
 build-image:
   stage: build
+  tags: 
+   - docker-runner
   image: docker:24.0
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
     DOCKER_TLS_CERTDIR: ""
-    IMAGE_TAG: "go-social:${CI_COMMIT_SHORT_SHA}"
+    IMAGE_TAG: "$CI_REGISTRY_NAME:$CI_COMMIT_SHORT_SHA"
   script:
     - docker version
     - docker info
-    - docker build -t gosocial:$CI_COMMIT_SHORT_SHA -f docker/Dockerfile .
+    - docker build -t "$IMAGE_TAG" -f docker/Dockerfile .
     - docker images | grep gosocial
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -109,6 +111,8 @@ build-image:
 
 trivy:
   stage: security
+  tags:
+    - docker-runner
   image:
     name: aquasec/trivy:latest
     entrypoint: [""]
@@ -124,7 +128,7 @@ trivy:
         --severity HIGH,CRITICAL \
         --exit-code 1 \
         --no-progress \
-        gosocial:${CI_COMMIT_SHORT_SHA}
+        "$IMAGE_TAG"
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -133,6 +137,8 @@ trivy:
  
 push-image:
   stage: push
+  tags:
+    - docker-runner
   image: docker:24.0
   variables:
     DOCKER_HOST: "unix:///var/run/docker.sock"
