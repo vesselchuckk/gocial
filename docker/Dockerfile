@@ -3,7 +3,7 @@
 # =========================
 # Stage 1 - Build
 # =========================
-FROM golang:1.25.1-alpine@sha256:b6ed3fd0452c0e9bcdef5597f29cc1418f61672e9d3a2f55bf02e7222c014abd AS builder
+FROM golang:1.25.7-alpine@sha256:b6ed3fd0452c0e9bcdef5597f29cc1418f61672e9d3a2f55bf02e7222c014abd AS builder
 
 WORKDIR /src
 
@@ -27,12 +27,22 @@ RUN --mount=type=cache,target=/go/pkg/mod \
         -o /out/api \
         ./cmd/api
 
-
 # =========================
 # Stage 2 - golang-migrate
 # =========================
-FROM migrate/migrate:v4.19.1 AS migrate
+FROM golang:1.25.7-alpine AS migrate-builder
 
+RUN apk add --no-cache git
+
+RUN git clone --depth 1 --branch v4.19.1 \
+      https://github.com/golang-migrate/migrate.git /src/migrate
+
+WORKDIR /src/migrate
+
+RUN go get github.com/jackc/pgx/v5@v5.9.0 google.golang.org/grpc@v1.79.3 && \
+    go mod tidy && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -tags 'postgres' -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate
 
 # =========================
 # Stage 3 - Runtime
@@ -53,7 +63,7 @@ COPY --from=builder /out/api ./api
 COPY --from=builder /src/cmd/migrations ./migrations
 
 # Копируем migrate из официального образа
-COPY --from=migrate /usr/local/bin/migrate /usr/local/bin/migrate
+COPY --from=migrate-builder /out/migrate /usr/local/bin/migrate
 
 COPY docker/docker-entrypoint.sh .
 

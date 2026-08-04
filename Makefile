@@ -5,7 +5,7 @@ make seed:
 	go run cmd/migrations/seed/main.go
 
 pin-images:
-	@echo "golang:1.25.1-alpine ->"
+	@echo "golang:1.25.7-alpine ->"
 	@docker pull -q golang:1.25.1-alpine >/dev/null
 	@docker inspect golang:1.25.1-alpine --format '{{index .RepoDigests 0}}'
 	@echo "alpine:3.22 ->"
