@@ -3,7 +3,7 @@
 # =========================
 # Stage 1 - Build
 # =========================
-FROM golang:1.25.7-alpine@sha256:b6ed3fd0452c0e9bcdef5597f29cc1418f61672e9d3a2f55bf02e7222c014abd AS builder
+FROM golang:1.25.7-alpine@sha256:f6751d823c26342f9506c03797d2527668d095b0a15f1862cddb4d927a7a4ced AS builder
 
 WORKDIR /src
 
