@@ -3,7 +3,7 @@
 # =========================
 # Stage 1 - Build
 # =========================
-FROM golang:1.25.7-alpine@sha256:f6751d823c26342f9506c03797d2527668d095b0a15f1862cddb4d927a7a4ced AS builder
+FROM golang:1.25.12-alpine@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587 AS builder
 
 WORKDIR /src
 
@@ -30,7 +30,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 # =========================
 # Stage 2 - golang-migrate
 # =========================
-FROM golang:1.25.7-alpine AS migrate-builder
+FROM golang:1.25.12-alpine AS migrate-builder
 
 RUN apk add --no-cache git
 
