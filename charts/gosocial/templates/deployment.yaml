@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: backend
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: backend
@@ -11,9 +11,11 @@ spec:
     metadata:
       labels:
         app: backend
-    spec:
+    spec:  
+      {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
-        - name: gitlab-registry
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: wait-for-postgres
           image: postgres:16-alpine
@@ -35,8 +37,8 @@ spec:
               done
       containers:
         - name: backend
-          image: registry.gitlab.com/vesselchuckk/go-social:latest
-          imagePullPolicy: IfNotPresent
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag}}"
+          imagePullPolicy: {{ .Values.pullPolicy }}
           ports:
             - containerPort: 8080
           envFrom:
@@ -56,4 +58,3 @@ spec:
                 command: ["sh", "-c", "sleep 5"]
       terminationGracePeriodSeconds: 30
  
-
