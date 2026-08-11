@@ -165,11 +165,8 @@ deploy-to-minikube:
     - minikube-runner
   variables:
     CI_DEBUG_TRACE: "true"
-    IMAGE_TAG: "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA"      
+    IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"      
   script:
-    - kubectl set image deployment/backend backend="$IMAGE_TAG"
-    - kubectl rollout status deployment/backend --timeout=120s
+    - helm upgrade --install gosocial ./charts/gosocial -- set image.tag=$IMAGE_TAG --wait --timeout 120s
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-
