@@ -167,6 +167,6 @@ deploy-to-minikube:
     CI_DEBUG_TRACE: "true"
     IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"      
   script:
-    - helm upgrade --install gosocial ./charts/gosocial -- set image.tag=$IMAGE_TAG --wait --timeout 120s
+    - helm upgrade --install gosocial ./charts/gosocial --set image.tag=$IMAGE_TAG --wait --timeout 120s
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
