@@ -1,6 +1,6 @@
 image:
  repository: registry.gitlab.com/vesselchuckk/gocial
- tag: 647e3641
+ tag: "3d8dd0da"
  pullPolicy: IfNotPresent
 
 imagePullSecrets:
