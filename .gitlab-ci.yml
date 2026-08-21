@@ -8,7 +8,7 @@ stages:
 
 variables:
   # go
-  GO_VERSION: "1.25.12"
+  GO_VERSION: "1.26.7"
   GOPATH: "${CI_PROJECT_DIR}/.cache/go-path"
   GOMODCACHE: "${CI_PROJECT_DIR}/.cache/go-mod"
   GOCACHE: "${CI_PROJECT_DIR}/.cache/go-build"
