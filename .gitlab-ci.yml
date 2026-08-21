@@ -158,21 +158,24 @@ push-image:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
  
 # DEPLOY
- 
+
 update-manifest:
-  stage: deploy
-  image: alpine:3.22
-  variables:
-    IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
-  before_script:
-    - apk add --no-cache git
-    - git config --global user.email "ci@gosocial.local"
-    - git config --global user.name "GitLab CI"
-    - git remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
-  script:
-    - sed -i "s/tag: .*/tag: \"${IMAGE_TAG}\"/" charts/gosocial/values.yaml
-    - git add charts/gosocial/values.yaml
-    - git commit -m "deploy: bump image tag to ${IMAGE_TAG} [skip ci]"
-    - git push origin HEAD:${CI_COMMIT_BRANCH}
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+ stage: deploy
+ image: alpine:3.22
+ variables:
+   IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+
+ before_script:
+   - apk add --no-cache git
+   - git config --global user.email "ci@gosocial.local"
+   - git config --global user.name "GitLab CI"
+   - git remote set-url origin "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"
+
+ script:
+   - 'sed -i "s/tag: .*/tag: \"${IMAGE_TAG}\"/" charts/gosocial/values.yaml'
+   - 'git add charts/gosocial/values.yaml'
+   - 'git commit -m "deploy: bump image tag to ${IMAGE_TAG} [skip ci]"'
+   - 'git push origin HEAD:${CI_COMMIT_BRANCH}'
+
+ rules:
+   - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'	
